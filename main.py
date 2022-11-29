@@ -103,6 +103,10 @@ def get_args_parser():
     return parser
 
 
+def wandb_hyperparameter(args):
+    hyps = {}
+
+
 def main(args):
     utils.init_distributed_mode(args)
     print("git:\n  {}\n".format(utils.get_sha()))
@@ -126,8 +130,11 @@ def main(args):
         model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu])
         model_without_ddp = model.module
     n_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+    # initialize wandb
     wandb.init()
-    wandb.watch(model)
+    wandb.watch(model_without_ddp)
+
     print('number of params:', n_parameters)
 
     param_dicts = [
@@ -221,6 +228,12 @@ def main(args):
                      **{f'test_{k}': v for k, v in test_stats.items()},
                      'epoch': epoch,
                      'n_parameters': n_parameters}
+        # wandb logging
+        wandb.log({**{f'train_{k}': v for k, v in train_stats.items()},
+                   **{f'test_{k}': v for k, v in test_stats.items()},
+                   },
+                  step=epoch
+                  )
 
         if args.output_dir and utils.is_main_process():
             with (output_dir / "log.txt").open("a") as f:
