@@ -145,12 +145,12 @@ def make_coco_transforms(image_set):
 
 
 def build(image_set, args):
-    root = Path(args.data_path)
+    root = Path(args.coco_path)
     assert root.exists(), f'provided COCO path {root} does not exist'
     mode = 'instances'
     PATHS = {
-        "train": (root / "grayscale-coco/train", root / "annotations" / f'_annotations.coco.json'),
-        "val": (root / "grayscale-coco/valid", root / "annotations" / f'_annotations.coco.json'),
+        "train": (root / "train", root / "train" / f'_annotations.coco.json'),
+        "val": (root / "valid", root / "valid" / f'_annotations.coco.json'),
     }
 
     img_folder, ann_file = PATHS[image_set]
