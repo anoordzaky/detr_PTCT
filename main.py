@@ -131,10 +131,6 @@ def main(args):
         model_without_ddp = model.module
     n_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
 
-    # initialize wandb
-    wandb.init()
-    wandb.watch(model_without_ddp)
-
     print('number of params:', n_parameters)
 
     param_dicts = [
@@ -184,7 +180,12 @@ def main(args):
                 args.resume, map_location='cpu', check_hash=True)
         else:
             checkpoint = torch.load(args.resume, map_location='cpu')
-        model_without_ddp.load_state_dict(checkpoint['model'])
+
+        del checkpoint["model"]["class_embed.weight"]
+        del checkpoint["model"]["class_embed.bias"]
+        del checkpoint["model"]["query_embed.weight"]
+
+        model_without_ddp.load_state_dict(checkpoint['model'], strict=False)
         if not args.eval and 'optimizer' in checkpoint and 'lr_scheduler' in checkpoint and 'epoch' in checkpoint:
             optimizer.load_state_dict(checkpoint['optimizer'])
             lr_scheduler.load_state_dict(checkpoint['lr_scheduler'])
@@ -196,6 +197,10 @@ def main(args):
         if args.output_dir:
             utils.save_on_master(coco_evaluator.coco_eval["bbox"].eval, output_dir / "eval.pth")
         return
+
+    # initialize wandb
+    wandb.init()
+    wandb.watch(model_without_ddp)
 
     print("Start training")
     start_time = time.time()
