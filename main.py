@@ -9,6 +9,7 @@ from pathlib import Path
 import numpy as np
 import torch
 from torch.utils.data import DataLoader, DistributedSampler
+import wandb
 
 import datasets
 import util.misc as utils
@@ -120,12 +121,12 @@ def main(args):
 
     model, criterion, postprocessors = build_model(args)
     model.to(device)
-
     model_without_ddp = model
     if args.distributed:
         model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu])
         model_without_ddp = model.module
     n_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    wandb.watch(model)
     print('number of params:', n_parameters)
 
     param_dicts = [
