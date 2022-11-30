@@ -181,6 +181,7 @@ def main(args):
         else:
             checkpoint = torch.load(args.resume, map_location='cpu')
 
+        # conforming the output shape to the custom dataset
         del checkpoint["model"]["class_embed.weight"]
         del checkpoint["model"]["class_embed.bias"]
         del checkpoint["model"]["query_embed.weight"]
@@ -202,6 +203,7 @@ def main(args):
     wandb.init()
     wandb.watch(model_without_ddp)
 
+    # initialize timer
     print("Start training")
     start_time = time.time()
     for epoch in range(args.start_epoch, args.epochs):
@@ -213,6 +215,17 @@ def main(args):
         lr_scheduler.step()
         if args.output_dir:
             checkpoint_paths = [output_dir / 'checkpoint.pth']
+
+            # time-based checkpoint for training @ colab free tier
+            if time.time() - start_time > 100:
+                utils.save_on_master({
+                    'model': model_without_ddp.state_dict(),
+                    'optimizer': optimizer.state_dict(),
+                    'lr_scheduler': lr_scheduler.state_dict(),
+                    'epoch': epoch,
+                    'args': args,
+                }, output_dir / f'6h-checkpoint.pth')
+
             # extra checkpoint before LR drop and every 100 epochs
             if (epoch + 1) % args.lr_drop == 0 or (epoch + 1) % 100 == 0:
                 checkpoint_paths.append(output_dir / f'checkpoint{epoch:04}.pth')
@@ -233,6 +246,7 @@ def main(args):
                      **{f'test_{k}': v for k, v in test_stats.items()},
                      'epoch': epoch,
                      'n_parameters': n_parameters}
+
         # wandb logging
         wandb.log({**{f'train_{k}': v for k, v in train_stats.items()},
                    **{f'test_{k}': v for k, v in test_stats.items()},
