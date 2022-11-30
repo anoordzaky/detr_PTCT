@@ -225,6 +225,7 @@ def main(args):
                     'epoch': epoch,
                     'args': args,
                 }, output_dir / f'6h-checkpoint.pth')
+                break
 
             # extra checkpoint before LR drop and every 100 epochs
             if (epoch + 1) % args.lr_drop == 0 or (epoch + 1) % 100 == 0:
