@@ -106,6 +106,10 @@ def get_args_parser():
                         help='project name in wandb')
     parser.add_argument('--username', default="", type="str",
                         help="username in wandb")
+
+    # termination argument
+    parser.add_argument('--termination', default=6, type=int,
+                        help="time to terminate training (in hrs)")
     return parser
 
 
