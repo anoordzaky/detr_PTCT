@@ -102,9 +102,9 @@ def get_args_parser():
     parser.add_argument('--dist_url', default='env://', help='url used to set up distributed training')
 
     # wandb parameters
-    parser.add_argument('--project', default="",
+    parser.add_argument('--project', default="", type=str,
                         help='project name in wandb')
-    parser.add_argument('--username', default="",
+    parser.add_argument('--username', default="", type=str,
                         help="username in wandb")
 
     # termination argument
@@ -209,7 +209,7 @@ def main(args):
     wandb.init(project=args.project, entity=args.username)
 
     # log hyperparameters
-    wandb.log({
+    wandb.config({
         "batch_size": args.batch_size,
         "lr": args.lr,
         "lr_backbone": args.lr_backbone,
