@@ -205,17 +205,17 @@ def main(args):
             utils.save_on_master(coco_evaluator.coco_eval["bbox"].eval, output_dir / "eval.pth")
         return
 
-    # initialize wandb
-    wandb.init(project=args.project, entity=args.username)
-
-    # log hyperparameters
-    wandb.config({
+# log hyperparameters
+    config = {
         "batch_size": args.batch_size,
         "lr": args.lr,
         "lr_backbone": args.lr_backbone,
         "epochs": args.epochs,
         "weight_decay": args.weight_decay
-    })
+    }
+
+    # initialize wandb
+    wandb.init(project=args.project, entity=args.username, config=config)
 
     # monitor the model
     wandb.watch(model_without_ddp)
