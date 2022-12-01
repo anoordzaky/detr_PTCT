@@ -100,11 +100,13 @@ def get_args_parser():
     parser.add_argument('--world_size', default=1, type=int,
                         help='number of distributed processes')
     parser.add_argument('--dist_url', default='env://', help='url used to set up distributed training')
+
+    # wandb parameters
+    parser.add_argument('--project', default="", type="str",
+                        help='project name in wandb')
+    parser.add_argument('--username', default="", type="str",
+                        help="username in wandb")
     return parser
-
-
-def wandb_hyperparameter(args):
-    hyps = {}
 
 
 def main(args):
@@ -200,12 +202,24 @@ def main(args):
         return
 
     # initialize wandb
-    wandb.init()
+    wandb.init(project=args.project, entity=args.username)
+
+    # log hyperparameters
+    wandb.log({
+        "batch_size": args.batch_size,
+        "lr": args.lr,
+        "lr_backbone": args.lr_backbone,
+        "epochs": args.epochs,
+        "weight_decay": args.weight_decay
+    })
+
+    # monitor the model
     wandb.watch(model_without_ddp)
 
     # initialize timer
     print("Start training")
     start_time = time.time()
+    terminate_time = args.terminate * 3600
     for epoch in range(args.start_epoch, args.epochs):
         if args.distributed:
             sampler_train.set_epoch(epoch)
@@ -217,14 +231,14 @@ def main(args):
             checkpoint_paths = [output_dir / 'checkpoint.pth']
 
             # time-based checkpoint for training @ colab free tier
-            if time.time() - start_time > 100:
+            if time.time() - start_time > terminate_time:
                 utils.save_on_master({
                     'model': model_without_ddp.state_dict(),
                     'optimizer': optimizer.state_dict(),
                     'lr_scheduler': lr_scheduler.state_dict(),
                     'epoch': epoch,
                     'args': args,
-                }, output_dir / f'6h-checkpoint.pth')
+                }, output_dir / f'{args.terminate}h-checkpoint.pth')
                 break
 
             # extra checkpoint before LR drop and every 100 epochs
