@@ -223,7 +223,7 @@ def main(args):
     # initialize timer
     print("Start training")
     start_time = time.time()
-    terminate_time = args.terminate * 3600
+    terminate_time = args.termination * 3600
     for epoch in range(args.start_epoch, args.epochs):
         if args.distributed:
             sampler_train.set_epoch(epoch)
@@ -242,7 +242,7 @@ def main(args):
                     'lr_scheduler': lr_scheduler.state_dict(),
                     'epoch': epoch,
                     'args': args,
-                }, output_dir / f'{args.terminate}h-checkpoint.pth')
+                }, output_dir / f'{args.termination}h-checkpoint.pth')
                 break
 
             # extra checkpoint before LR drop and every 100 epochs
